@@ -17,7 +17,7 @@ How to run:
 - type:
   `python ui.py`
 
-- if you have python2 and python3 installed use python3 ui.py
+- if you have python2 and python3 installed use `python3 ui.py`
 
 - fill in the txt file path
 
