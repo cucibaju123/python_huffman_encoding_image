@@ -14,7 +14,8 @@ How to run:
 
 - open command line terminal
 
-- type: python ui.py
+- type:
+  `python ui.py`
 
 - if you have python2 and python3 installed use python3 ui.py
 
