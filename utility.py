@@ -1,5 +1,10 @@
 #! /usr/bin/env python3
+from sys import byteorder
+import os
 from Node import Node
+from bitstring import BitArray, BitStream
+import pickle
+from db import *
 
 codes = {}
 
@@ -51,15 +56,44 @@ def total_gain(data: str, symbol_with_code: dict, symbol_with_prob: dict):
     return before_compression, after_compression
 
 
-def huffman_encoding(data: str):
-    """Encode the given data using huffman encoding"""
-    symbol_with_prob = calculate_probability(data)
-    print("FREQUENCY FOR EACH CHARACTER: ")
-    print(symbol_with_prob)
-    nodes = []
-    for symbol in symbol_with_prob:
-        nodes.append(Node(symbol_with_prob[symbol], symbol))
+def bit_string_to_byte_file(data: str, filepath: str) -> str:
+    """
+    Parameters: encoded string, filepath string.
+    Convert bits string to bytes and write to a binary file
+    Returns: binary file output path and txt nodes file path
+    """
 
+    output_bytes = BitArray(bin=data)
+
+    extension_index = filepath.index(".txt")
+    dirpath = filepath[:extension_index]
+    outputpath = dirpath + "_encoded.bin"
+    nodespath = dirpath + "_nodes.bin"
+
+    with open(outputpath, "wb") as file:
+        file.write(output_bytes.tobytes())
+
+    return outputpath, nodespath
+
+
+def byte_file_to_bits_str(filepath: str) -> str:
+    """
+    Convert binary file's content and returning that as string
+    """
+    bytes = BitArray(filename=filepath)
+    return bytes.bin
+
+
+def decoded_str_to_file(decoded_string: str, filename: str):
+    with open(filename + "_decoded.txt", "w") as file:
+        file.write(decoded_string)
+
+    outputpath = filename + "_decoded.txt"
+    return outputpath
+
+
+def create_huffman_tree(nodes: list) -> list:
+    """create huffman tree to the root from list of leaf nodes"""
     while len(nodes) > 1:
         nodes.sort(key=lambda x: x.prob)
         right = nodes[0]
@@ -73,23 +107,56 @@ def huffman_encoding(data: str):
         nodes.remove(right)
         nodes.append(newNode)
 
+    return nodes[0]
+
+
+def huffman_encoding(data: str):
+    """Encode the given data using huffman encoding"""
+    symbol_with_prob = calculate_probability(data)
+    nodes = []
+    for symbol in symbol_with_prob:
+        nodes.append(Node(symbol_with_prob[symbol], symbol))
+
+    list_of_nodes = [(node.symbol, node.prob) for node in nodes]
+    conn = connect()
+    delete(conn)
+    insert(conn, list_of_nodes)
+    close(conn)
+
+    huffman_tree = create_huffman_tree(nodes)
+
     # Menggunakan nodes[0] karena hanya tersisa satu node (yaitu root) dalam nodes list
-    symbols_with_code = calculate_codes(nodes[0])
-    print("CODE FOR EACH CHARACTER: ")
-    print(symbols_with_code)
-    output_encoded_str = output_encoded(data, symbols_with_code)
-    print("FULL ENCODED STRING: ")
-    print(output_encoded_str)
+    symbol_with_code = calculate_codes(huffman_tree)
+    output_encoded_str = output_encoded(data, symbol_with_code)
     before_compression, after_compression = total_gain(
-        data, symbols_with_code, symbol_with_prob
+        data, symbol_with_code, symbol_with_prob
     )
-    print("Before Compression: {} bits".format(before_compression))
-    print("After compression: {} bits".format(after_compression))
+
+    return (
+        output_encoded_str,
+        symbol_with_code,
+        symbol_with_prob,
+        before_compression,
+        after_compression,
+        huffman_tree,
+    )
 
 
-def main():
-    data = input("Masukkan String: ")
-    huffman_encoding(data)
+def huffman_decoding(encoded_data: str, huffman_tree: Node):
+    tree_head = huffman_tree
+    decoded_output = []
 
+    for x in encoded_data:
+        if x == "1":
+            huffman_tree = huffman_tree.right
+        elif x == "0":
+            huffman_tree = huffman_tree.left
+        try:
+            if huffman_tree.left.symbol == None and huffman_tree.right.symbol == None:
+                pass
+        except AttributeError:
+            decoded_output.append(huffman_tree.symbol)
+            huffman_tree = tree_head
 
-main()
+    string = "".join([str(item) for item in decoded_output])
+    return string

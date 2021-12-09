@@ -1,6 +1,6 @@
 # HUFFMAN ENCODING WITH PYTHON
 
-source(https://towardsdatascience.com/huffman-encoding-python-implementation-8448c3654328)
+[source](https://towardsdatascience.com/huffman-encoding-python-implementation-8448c3654328)
 
 How to run:
 
