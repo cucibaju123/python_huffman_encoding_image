@@ -1,5 +1,7 @@
 # HUFFMAN ENCODING WITH PYTHON
 
+Encode or Decode txt file using huffman coding algorithm
+
 [source](https://towardsdatascience.com/huffman-encoding-python-implementation-8448c3654328)
 
 Packages:
